@@ -1,0 +1,135 @@
+<html>
+  <title> </title>
+
+  <h2></h2>
+  <body>
+    <div align="center">
+      <h2>Withdraw TT_LP pineswap helper</h2>
+
+      <div
+        style="
+          width: 50%;
+          margin: auto;
+          border: 1px solid grey;
+          height: 100px;
+          padding: 20px;
+        "
+      >
+        Connected Address : <span id="add_">Not Coonected</span> <br />
+        <br />
+        Balance on TT_USDT Staked : <span id="bal"> ? </span> TT_USDT<br />
+
+        <input placeholder="Enter Amount to Withdraw" id="_in" />
+
+        <button onclick="withdraw()">Withdraw</button>
+
+        <br />
+        <br />
+      </div>
+    </div>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/web3/3.0.0-rc.5/web3.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+    ></script>
+
+    <script>
+      let Contract;
+      let currentAddr = "";
+      var contract = "0xbdb6424982fd02348d61de711ae9af1d5a7fd5d0";
+
+      let abi = [
+        {
+          constant: true,
+          inputs: [
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "balanceOf",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          payable: false,
+          stateMutability: "view",
+          type: "function",
+        },
+
+        {
+          constant: false,
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "withdraw",
+          outputs: [],
+          payable: false,
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ];
+
+      window.addEventListener("load", async function () {
+        if (window.ethereum) {
+          web3 = new Web3(window.ethereum);
+          try {
+            await ethereum.enable();
+          } catch (error) {
+            console.error(error);
+          }
+        } else if (window.web3) {
+          web3 = new Web3(window.web3.currentProvider);
+        }
+        if (web3) {
+          let accounts = await web3.eth.getAccounts();
+          currentAddr = accounts[0];
+          $("#add_").html(currentAddr);
+
+          console.log(currentAddr);
+          Contract = await new web3.eth.Contract(abi, contract);
+          console.log("minersContract", Contract);
+          setInterval(() => {
+            controlLoop();
+          }, 1000);
+        }
+      });
+      function controlLoop() {
+        Contract.methods
+          .balanceOf(currentAddr)
+          .call()
+          .then((res) => {
+            $("#bal").html((res / 1e18).toFixed(8));
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+
+      function withdraw() {
+        let amt = document.getElementById("_in").value;
+        let amount = (amt * 1e18).toString();
+        Contract.methods
+          .withdraw(amount)
+          .send({ from: currentAddr })
+          .then((result) => {
+            console.log("result");
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    </script>
+  </body>
+</html>
